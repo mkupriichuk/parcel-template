@@ -1,14 +1,35 @@
 const purify = require('purify-css');
-const cssFile = './dist/app.ff7fd767.css'; // YOUR CSS FILE
+const fs = require('fs');
 
+let dir = './dist';
+let cssArr = getFiles(dir);
+
+function getFiles(dir, files_) {
+  files_ = files_ || [];
+  let files = fs.readdirSync(dir);
+  for (let i in files) {
+    let name = dir + '/' + files[i];
+    if (~name.indexOf('.css')) {
+      files_.push(name);
+    }
+  }
+  return files_.join();
+}
+
+let whiteListClass = [
+  'is-open',
+  'dropdown',
+  'active',
+  '*owl*',
+  '*mfp*'
+]
 
 const content = ['./dist/*.js', './dist/*.html'];
-const css = [cssFile];
+const css = [cssArr];
 const options = {
-  output: cssFile,
-  whitelist: ['is-open', 'dropdown', 'active', '*owl*', '*mfp*'],
+  output: cssArr,
+  whitelist: whiteListClass,
   info: true,
-  rejected: true,
   minify: true
 };
 
