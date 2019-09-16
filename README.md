@@ -32,7 +32,12 @@ $ npm run tinify
 ```
 $ npm run purify
 ```
-## 5. [yaspeller](https://github.com/hcodes/yaspeller)
+## 5. you also can structure your build files (like dist/style.css => dist/css/style.css). For this run structure.js
+
+```
+$ npm run structure
+```
+## 6. [yaspeller](https://github.com/hcodes/yaspeller)
 
 - go to config/speller_dict.json and change rules, then run script:
 

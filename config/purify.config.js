@@ -1,8 +1,16 @@
 const purify = require('purify-css');
 const fs = require('fs');
 
-let dir = './dist';
-let cssArr = getFiles(dir);
+
+let root;
+let cssDir = './dist/css/'; 
+if (fs.existsSync(cssDir)) {
+  root = './dist/css';
+} else {
+  root = './dist';
+}
+
+let cssArr = getFiles(root);
 
 function getFiles(dir, files_) {
   files_ = files_ || [];
@@ -22,9 +30,9 @@ let whiteListClass = [
   'active',
   '*owl*',
   '*mfp*'
-]
+];
 
-const content = ['./dist/*.js', './dist/*.html'];
+const content = ['./dist/*.js', './dist/js/*.js', './dist/*.html'];
 const css = [cssArr];
 const options = {
   output: cssArr,
