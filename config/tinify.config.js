@@ -3,7 +3,17 @@ const fs = require("fs");
 
 tinify.key = "";
 
-let imgArr = getFiles('./dist'); // we call the function, in the form of a parameter, we pass the folder in which we will be at the time the script is executed
+
+let root;
+let imagesDir = './dist/images/'; 
+if (fs.existsSync(imagesDir)) {
+  root = './dist/images';
+} else {
+  root = './dist';
+}
+
+
+let imgArr = getFiles(root); // we call the function, in the form of a parameter, we pass the folder in which we will be at the time the script is executed
 
 
 function getFiles(dir, files_) {
