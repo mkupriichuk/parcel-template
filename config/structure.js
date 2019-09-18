@@ -1,28 +1,47 @@
 /* eslint-disable */
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 
 const dirPath = './dist';
+const cssDir = './dist/css';
+const jsDir = './dist/js';
+const imagesDir = './dist/images';
+const fontsDir = './dist/fonts';
+
+
+function getFiles(dirPath, files_) {
+  files_ = files_ || [];
+  let files = fs.readdirSync(dirPath);
+  for (let i in files) {
+    let name = files[i];
+    if (~name.indexOf('.css') | ~name.indexOf('.html') | ~name.indexOf('.woff') | ~name.indexOf('.woff2') | ~name.indexOf('.js') | ~name.indexOf('.webp')|~name.indexOf('.svg')|~name.indexOf('.png') || ~name.indexOf('.jpg') || ~name.indexOf('.jpeg') || ~name.indexOf('.JPG')) {
+      files_.push(name);
+    }
+  }
+  return files_;
+}
+
+
+let files = getFiles(dirPath);
+
+const css = files.filter(ext => ext.endsWith('.css'));
+const js = files.filter(ext => ext.endsWith('.js'));
+const html = files.filter(ext => ext.endsWith('.html'));
+const fonts = files.filter(RegExp.prototype.test, /(woff|woff2)/);
+let  images = files.filter(RegExp.prototype.test, /(webp|png|svg|jpg|jpeg|JPG|gif)/);
+
+
+let faviconsReg = /favicon-32x32.[a-z0-9]|apple-icon-180x180.[a-z0-9]/g;
+let favicons = images.filter(item => item.match(faviconsReg));
+images = images.filter( ( el ) => !favicons.includes( el ) );
+
+
 
 function htmlPath() {
 
-  function getFiles(dirPath, files_) {
-    files_ = files_ || [];
-    let files = fs.readdirSync(dirPath);
-    for (let i in files) {
-      let name = dirPath + '/' + files[i];
-      if (~name.indexOf('.html')) {
-        files_.push(name);
-      }
-    }
-    return files_;
-  }
-
-  let htmlFiles = getFiles(dirPath);
-
-  for (let i = htmlFiles.length - 1; i >= 0; i--) {
-    let file = htmlFiles[i];
-    fs.readFile(file, 'utf-8', function(err, data) {
+  for (let i in html) {
+    let file = html[i];
+    fs.readFile(dirPath + '/' + file, 'utf-8', function(err, data) {
       if (err) throw err;
   
       let css = 'link rel="stylesheet" href="';
@@ -44,7 +63,7 @@ function htmlPath() {
         return mapObj[matched];
       });
   
-      fs.writeFile(file, newValue, 'utf-8', function(err) {
+      fs.writeFile(dirPath + '/' + file, newValue, 'utf-8', function(err) {
         if (err) throw err;
         console.log('htmlPath complete');
       });
@@ -57,24 +76,10 @@ htmlPath();
 
 function cssPath() {
 
-  function getFiles(files_) {
-    files_ = files_ || [];
-    let files = fs.readdirSync(dirPath + '/css');
-    for (let i in files) {
-      let name = './dist/css/' + files[i];
-      if (~name.indexOf('.css')) {
-        files_.push(name);
-      }
-    }
-    return files_;
-  }
+  for (let i in css) {
+    let file = css[i];
 
-  let cssFiles = getFiles();
-
-  for (let i = cssFiles.length - 1; i >= 0; i--) {
-    let file = cssFiles[i];
-
-    fs.readFile(file, 'utf-8', function(err, data) {
+    fs.readFile(dirPath + '/' + file, 'utf-8', function(err, data) {
       if (err) throw err;
   
       let fontSrc = 'src:url(';
@@ -95,7 +100,7 @@ function cssPath() {
         return mapObj[matched];
       });
   
-      fs.writeFile(file, newValue, 'utf-8', function(err) {
+      fs.writeFile(dirPath + '/' + file, newValue, 'utf-8', function(err) {
         if (err) throw err;
         console.log('cssPath complete');
       });
@@ -103,142 +108,62 @@ function cssPath() {
   }
 }
 
-// cssPath();
-
-function moveCss() {
-    let cssDir = './dist/css/'; 
-    if (!fs.existsSync(cssDir)) {
-      fs.mkdirSync(cssDir);
-
-      function getFiles(dirPath, files_) {
-        files_ = files_ || [];
-        let files = fs.readdirSync(dirPath);
-        for (let i in files) {
-          let name = dirPath + '/' + files[i];
-          if (~name.indexOf('.css')) {
-            files_.push(name);
-          }
-        }
-        return files_.join();
-      }
-    
-      let file = getFiles(dirPath);
-      let f = path.basename(file);
-      let dest = path.resolve(cssDir, f);
-    
-      fs.rename(file, dest, (err)=>{
-        if (err) throw err;
-        else console.log('css successfully moved');
+fs.ensureDir(cssDir)
+  .then(() => {
+    for (let i in css) {
+      let file = css[i];
+      fs.move(dirPath + '/' + file, cssDir + '/' + file, err => {
+        if (err) return console.error(err);
+        console.log('success!');
       });
     }
-    else {
-      console.log('css path is already exist')
+  })
+  .then(cssPath)
+  .catch(err => {
+    console.error(err);
+  });
+
+
+fs.ensureDir(jsDir)
+  .then(() => {
+    for (let i in js) {
+      let file = js[i];
+      fs.move(dirPath + '/' + file, jsDir + '/' + file, err => {
+        if (err) return console.error(err);
+        console.log('success!');
+      });
     }
+  })
+  .catch(err => {
+    console.error(err);
+  });
 
-    cssPath()
-}
-moveCss();
+fs.ensureDir(imagesDir)
+  .then(() => {
+    for (let i in images) {
+      let file = images[i];
+      fs.move(dirPath + '/' + file, imagesDir + '/' + file, err => {
+        if (err) return console.error(err);
+        console.log('success!');
+      });
+    }
+  })
+  .catch(err => {
+    console.error(err);
+  });
 
-
-
-function moveJs() {
-  let jsDir = './dist/js/';
-
-  if (!fs.existsSync(jsDir)) {
-    fs.mkdirSync(jsDir);
-    function getFiles(dirPath, files_) {
-      files_ = files_ || [];
-      let files = fs.readdirSync(dirPath);
-      for (let i in files) {
-        let name = dirPath + '/' + files[i];
-        if (~name.indexOf('.js')) {
-          files_.push(name);
-        }
+if (fonts.length != 0) {
+  fs.ensureDir(fontsDir)
+    .then(() => {
+      for (let i in fonts) {
+        let file = fonts[i];
+        fs.move(dirPath + '/' + file, fontsDir + '/' + file, err => {
+          if (err) return console.error(err);
+          console.log('success!');
+        });
       }
-      return files_.join();
-    }
-  
-    let file = getFiles(dirPath);
-    let f = path.basename(file);
-    let dest = path.resolve(jsDir, f);
-  
-    fs.rename(file, dest, (err)=>{
-      if (err) throw err;
-      else console.log('js successfully moved');
+    })
+    .catch(err => {
+      console.error(err);
     });
-  }
-  else {
-    console.log('js path is already exist')
-  }
 }
-moveJs();
-
-
-if (!fs.existsSync('./dist/images/')) {
-  fs.mkdirSync('./dist/images/');
-}
-else {
-  console.log('image path is already exist')
-}
-function imagesMove() {
-
-  function getFiles(dirPath, files_) {
-    files_ = files_ || [];
-    let files = fs.readdirSync(dirPath);
-    for (let i in files) {
-      let name = files[i];
-      if (~name.indexOf('.webp')|~name.indexOf('.svg')|~name.indexOf('.png') || ~name.indexOf('.jpg') || ~name.indexOf('.jpeg') || ~name.indexOf('.JPG')) {
-        files_.push(name);
-      }
-    }
-    return files_;
-  }
-  
-  let files = getFiles(dirPath);
-  
-  for (let i = files.length - 1; i >= 0; i--) {
-    let file = files[i];
-    fs.rename('./dist/' + file, './dist/images/' + file, function(err) {
-        if (err) throw err;
-        console.log('Move complete.');
-    });
-  }
-
-}
-
-imagesMove()
-
-
-if (!fs.existsSync('./dist/fonts/')) {
-  fs.mkdirSync('./dist/fonts/');
-}
-else {
-  console.log('font path is already exist')
-}
-function fontsMove() {
-
-  function getFiles(dirPath, files_) {
-    files_ = files_ || [];
-    let files = fs.readdirSync(dirPath);
-    for (let i in files) {
-      let name = files[i];
-      if (~name.indexOf('.woff')|~name.indexOf('.woff2')) {
-        files_.push(name);
-      }
-    }
-    return files_;
-  }
-  
-  let files = getFiles(dirPath);
-  
-  for (let i = files.length - 1; i >= 0; i--) {
-    let file = files[i];
-    fs.rename('./dist/' + file, './dist/fonts/' + file, function(err) {
-        if (err) throw err;
-        console.log('Move complete.');
-    });
-  }
-
-}
-
-fontsMove()

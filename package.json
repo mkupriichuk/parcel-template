@@ -21,9 +21,8 @@
     "autoprefixer": "^9.6.1",
     "babel-eslint": "^10.0.3",
     "css-mqpacker": "^7.0.0",
-    "fs": "0.0.1-security",
+    "fs-extra": "^8.1.0",
     "parcel-bundler": "^1.12.3",
-    "parcel-plugin-static-files-copy": "^2.2.1",
     "postcss-modules": "^1.4.1",
     "pug": "^2.0.4",
     "purify-css": "^1.2.5",
@@ -38,9 +37,5 @@
     "safari >= 7",
     "ie >= 9",
     "ios >= 6"
-  ],
-  "staticPath": "public",
-  "dependencies": {
-    "svg4everybody": "^2.1.9"
-  }
+  ]
 }
