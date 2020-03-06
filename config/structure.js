@@ -1,163 +1,136 @@
 /* eslint-disable */
-const fs = require('fs-extra');
+
+const fs = require('fs');
 const path = require('path');
+const replace = require('replace-in-file');
+const escapeRegExp = require('lodash.escaperegexp');
 
-const dirPath = './dist';
-const cssDir = './dist/css';
-const jsDir = './dist/js';
-const imagesDir = './dist/images';
-const fontsDir = './dist/fonts';
+let baseDir = 'dist'
+let imagesDir = 'images'
+let jsDir = 'js'
+let cssDir = 'css'
+let fontsDir = 'fonts'
+
+fs.readdir(`./${baseDir}`, (err, files) => {
 
 
-function getFiles(dirPath, files_) {
-  files_ = files_ || [];
-  let files = fs.readdirSync(dirPath);
-  for (let i in files) {
-    let name = files[i];
-    if (~name.indexOf('.css') | ~name.indexOf('.html') | ~name.indexOf('.woff') | ~name.indexOf('.woff2') | ~name.indexOf('.js') | ~name.indexOf('.webp')|~name.indexOf('.svg')|~name.indexOf('.png') || ~name.indexOf('.jpg') || ~name.indexOf('.jpeg') || ~name.indexOf('.JPG')) {
-      files_.push(name);
-    }
+  let css = files.filter(ext => ext.endsWith('.css'));
+  let js = files.filter(ext => ext.endsWith('.js'));
+  let maps = files.filter(file => file.match(/.+\.(map)$/));
+  let html = files.filter(ext => ext.endsWith('.html'));
+  let fonts = files.filter(ext => ext.match(/.+\.(woff|woff2)$/));
+  let images = files.filter(RegExp.prototype.test, /(^(?!favicon-32x32.\w|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/);
+
+
+  let assetsForCss = [...images, ...fonts];
+  let assetsForHtml = [...css, ...js, ...images, ...fonts];
+  let filesToMove = [...css, ...js, ...fonts, ...images, ...maps];
+
+
+  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, jsDir)) && js.length != 0) {
+    fs.mkdirSync(path.join(__dirname, `../${baseDir}`, jsDir));
   }
-  return files_;
-}
-
-
-let files = getFiles(dirPath);
-
-const css = files.filter(ext => ext.endsWith('.css'));
-const js = files.filter(ext => ext.endsWith('.js'));
-const html = files.filter(ext => ext.endsWith('.html'));
-const fonts = files.filter(RegExp.prototype.test, /(woff|woff2)/);
-const images = files.filter(RegExp.prototype.test, /(^(?!favicon-32x32.\w|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/);
-
-
-function htmlPath() {
-
-  for (let i in html) {
-    let file = html[i];
-    fs.readFile(dirPath + '/' + file, 'utf-8', function(err, data) {
-      if (err) throw err;
-  
-      let css = 'link rel="stylesheet" href="';
-      let js = 'script src="';
-      let backgroundImage = 'style="background-image:url(';
-      let img = 'img src="';
-      let imgClass = '" src="';
-      let spriteUse = 'use xlink:href="sprite';
-      let mapObj = {
-        [css]: 'link rel="stylesheet" href="css/',
-        [js]: 'script src="js/',
-        [backgroundImage]: 'style="background-image:url(images/',
-        [img]: 'img src="images/',
-        [imgClass]: '" src="images/',
-        [spriteUse]: 'use xlink:href="images/sprite'
-      };
-  
-      let newValue = data.replace(/link rel="stylesheet" href="|script src="|style="background-image:url\(|img src="|" src="|use xlink:href="sprite/gi, function(matched) {
-        return mapObj[matched];
-      });
-  
-      fs.writeFile(dirPath + '/' + file, newValue, 'utf-8', function(err) {
-        if (err) throw err;
-        console.log('htmlPath complete');
-      });
-    });
+  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, cssDir)) && css.length != 0) {
+    fs.mkdirSync(path.join(__dirname, `../${baseDir}`, cssDir));
+  }
+  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, imagesDir)) && images.length != 0) {
+    fs.mkdirSync(path.join(__dirname, `../${baseDir}`, imagesDir));
+  }
+  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, fontsDir)) && fonts.length != 0) {
+    fs.mkdirSync(path.join(__dirname, `../${baseDir}`, fontsDir));
   }
 
-}
 
-htmlPath();
-
-function cssPath() {
-
-  for (let i in css) {
-    let file = css[i];
-
-    fs.readFile(dirPath + '/' + file, 'utf-8', function(err, data) {
-      if (err) throw err;
-  
-      let fontSrc = 'src:url(';
-      let fontUrl = ',url(';
-      let background = ' url(';
-      let background2 = 'background:url(';
-      let backgroundImage = 'background-image:url(';
-  
-      let mapObj = {
-        [fontSrc]: 'src:url(../fonts/',
-        [fontUrl]: ',url(../fonts/',
-        [background]: ' url(../images/',
-        [background2]: 'background:url(../images/',
-        [backgroundImage]: 'background-image:url(../images/'
-      };
-  
-      let newValue = data.replace(/src:url\(|,url\(| url\(|background:url\(|background-image:url\(/gi, function(matched) {
-        return mapObj[matched];
-      });
-  
-      fs.writeFile(dirPath + '/' + file, newValue, 'utf-8', function(err) {
-        if (err) throw err;
-        console.log('cssPath complete');
-      });
-    });
-  }
-}
-
-fs.ensureDir(cssDir)
-  .then(() => {
-    for (let i in css) {
-      let file = css[i];
-      fs.move(dirPath + '/' + file, cssDir + '/' + file, err => {
-        if (err) return console.error(err);
-        console.log('success!');
-      });
+  // replace all other resources in html
+  html.forEach(
+    file => {
+      assetsForHtml.forEach(name => {
+        let dir;
+        if (name.match(/.+\.(woff|woff2)$/)) {
+          dir = fontsDir + '/';
+        } else if (name.match(/.+\.(css)$/)) {
+          dir = cssDir + '/';
+        } else if (name.match(/.+\.(js)$/)) {
+          dir = jsDir + '/';
+        } else if (name.match(/(^(?!favicon-32x32.\w|.ico|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/)) {
+          dir = imagesDir + '/';
+        } else if (name.match(/(favicon-32x32.\w|.ico|apple-icon-180x180.\w)/)) {
+          dir = '';
+        }
+        let options = {
+          files: path.join(baseDir, file),
+          from: new RegExp(escapeRegExp(name), 'g'),
+          to: dir + name
+        }
+        try {
+          let changedFiles = replace.sync(options);
+        } catch (error) {
+          console.error('Error occurred:', error);
+        }
+      })
     }
-  })
-  .then(cssPath)
-  .catch(err => {
-    console.error(err);
-  });
+  )
 
-
-fs.ensureDir(jsDir)
-  .then(() => {
-    for (let i in js) {
-      let file = js[i];
-      fs.move(dirPath + '/' + file, jsDir + '/' + file, err => {
-        if (err) return console.error(err);
-        console.log('success!');
-      });
+  // replace map links in js
+  js.forEach(
+    file => {
+      maps.forEach(name => {
+        let options = {
+          files: path.join(baseDir, file),
+          from: name,
+          to: '../' + jsDir + '/' + name
+        }
+        try {
+          let changedFiles = replace.sync(options);
+        } catch (error) {
+          console.error('Error occurred:', error);
+        }
+      })
     }
-  })
-  .catch(err => {
-    console.error(err);
-  });
+  )
 
-fs.ensureDir(imagesDir)
-  .then(() => {
-    for (let i in images) {
-      let file = images[i];
-      fs.move(dirPath + '/' + file, imagesDir + '/' + file, err => {
-        if (err) return console.error(err);
-        console.log('success!');
-      });
+  // replace links in css
+  css.forEach(
+    file => {
+      assetsForCss.forEach(name => {
+        let dir;
+        if (name.match(/.+\.(woff|woff2)$/)) {
+          dir = fontsDir;
+        } else if (name.match(/(^(?!favicon-32x32.\w|.ico|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/)) {
+          dir = imagesDir;
+        }
+        let options = {
+          files: path.join(baseDir, file),
+          from: new RegExp(escapeRegExp(name), 'g'),
+          to: '../' + dir + '/' + name
+        }
+        try {
+          let changedFiles = replace.sync(options);
+        } catch (error) {
+          console.error('Error occurred:', error);
+        }
+      })
     }
-  })
-  .catch(err => {
-    console.error(err);
-  });
+  )
 
-if (fonts.length != 0) {
-  fs.ensureDir(fontsDir)
-    .then(() => {
-      for (let i in fonts) {
-        let file = fonts[i];
-        fs.move(dirPath + '/' + file, fontsDir + '/' + file, err => {
-          if (err) return console.error(err);
-          console.log('success!');
-        });
+  // move files
+  filesToMove.forEach(
+    name => {
+      let assetPath;
+      if (name.endsWith('.js.map') || name.endsWith('.js')) {
+        assetPath = jsDir;
+      } else if (name.endsWith('.css.map') || name.endsWith('.css')) {
+        assetPath = cssDir;
+      } else if (name.match(/.+\.(woff|woff2)$/)) {
+        assetPath = fontsDir;
+      } else if (name.match(/(^(?!favicon-32x32.\w|.ico|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/)) {
+        assetPath = imagesDir;
       }
-    })
-    .catch(err => {
-      console.error(err);
-    });
-}
+      fs.rename(path.join(__dirname, `../${baseDir}`, name), path.join(__dirname, `../${baseDir}`, assetPath, name), function (err) {
+        if (err) throw err
+        console.log(`Successfully moved ${name}`)
+      })
+    }
+  )
+
+});
