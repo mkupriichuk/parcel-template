@@ -33,10 +33,10 @@ fs.readdir(`./${baseDir}`, (err, files) => {
   if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, cssDir)) && css.length != 0) {
     fs.mkdirSync(path.join(__dirname, `../${baseDir}`, cssDir));
   }
-  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, imagesDir)) && images.length != 0) {
+  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, imagesDir)) && images.length != 0 ) {
     fs.mkdirSync(path.join(__dirname, `../${baseDir}`, imagesDir));
   }
-  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, fontsDir)) && fonts.length != 0) {
+  if (!fs.existsSync(path.join(__dirname, `../${baseDir}`, fontsDir)) && fonts.length != 0 ) {
     fs.mkdirSync(path.join(__dirname, `../${baseDir}`, fontsDir));
   }
 
@@ -50,11 +50,14 @@ fs.readdir(`./${baseDir}`, (err, files) => {
           dir = fontsDir + '/';
         } else if (name.match(/.+\.(css)$/)) {
           dir = cssDir + '/';
-        } else if (name.match(/.+\.(js)$/)) {
+        }
+        else if (name.match(/.+\.(js)$/)) {
           dir = jsDir + '/';
-        } else if (name.match(/(^(?!favicon-32x32.\w|.ico|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/)) {
+        }
+        else if (name.match(/(^(?!favicon-32x32.\w|.ico|apple-icon-180x180.\w).+\.(webp|png|svg|jpg|jpeg|JPG|gif)$)/)) {
           dir = imagesDir + '/';
-        } else if (name.match(/(favicon-32x32.\w|.ico|apple-icon-180x180.\w)/)) {
+        }
+        else if (name.match(/(favicon-32x32.\w|.ico|apple-icon-180x180.\w)/)) {
           dir = '';
         }
         let options = {
