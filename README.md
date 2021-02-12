@@ -1,5 +1,11 @@
 # parcel-starter
-Parcel template with pug and sass
+Parcel template
+
+You also can switch html to pug template
+
+```
+git checkout pug
+```
 
 
 ## 1. npm run dev
